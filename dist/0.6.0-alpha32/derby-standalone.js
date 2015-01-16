@@ -2243,6 +2243,11 @@ App.prototype._autoRefresh = function() {
     var ns = app.model.get('$render.ns');
     app.page.render(ns);
   });
+  this.model.channel.on('derby:refreshStyles', function(data) {
+    var styleElement = document.querySelector('style[data-filename="' +
+      data.filename + '"]');
+    if (styleElement) styleElement.innerHTML = data.css;
+  });
   function registerClient() {
     var data = {name: app.name, hash: app.scriptHash};
     app.model.channel.send('derby:app', data, function(err) {
@@ -2645,7 +2650,11 @@ Page.prototype._addContextListeners = function(eventModel) {
     }
   }
   function removeBinding(binding) {
-    if (binding.meta) eventModel.removeBinding(binding.meta);
+    var bindingWrappers = binding.meta;
+    if (!bindingWrappers) return;
+    for (var i = bindingWrappers.length; i--;) {
+      eventModel.removeBinding(bindingWrappers[i]);
+    }
   }
   function removeNode(node) {
     var component = node.$component;
@@ -2670,7 +2679,11 @@ function BindingWrapper(eventModel, expression, binding) {
   this.id = nextId++;
   this.eventModels = null;
   this.dependencies = null;
-  binding.meta = this;
+  if (binding.meta) {
+    binding.meta.push(this);
+  } else {
+    binding.meta = [this];
+  }
 }
 BindingWrapper.prototype.updateDependencies = function() {
   var dependencies = this.expression.dependencies(this.binding.context);
@@ -2717,7 +2730,7 @@ function equalDependencies(a, b) {
     }
   }
   return true;
-};
+}
 
 function patchTextBinding(binding) {
   if (
@@ -9601,7 +9614,7 @@ EachBlock.prototype.attachTo = function(parent, node, context) {
 };
 EachBlock.prototype.attachItemTo = function(parent, node, context, itemFor) {
   var start, end;
-  var oldPrevious = node.previousSibling;
+  var oldPrevious = node && node.previousSibling;
   var nextNode = attachContent(parent, node, this.content, context);
   if (nextNode === node) {
     start = end = document.createComment('empty');
@@ -9756,9 +9769,9 @@ function replaceRange(context, start, end, fragment, binding, innerOnly) {
 }
 function emitRemoved(context, node, ignore) {
   context.removeNode(node);
-  emitRemovedBinding(node.$bindNode);
-  emitRemovedBinding(node.$bindStart);
-  emitRemovedBinding(node.$bindItemStart);
+  emitRemovedBinding(context, ignore, node.$bindNode);
+  emitRemovedBinding(context, ignore, node.$bindStart);
+  emitRemovedBinding(context, ignore, node.$bindItemStart);
   var attributes = node.$bindAttributes;
   if (attributes) {
     for (var key in attributes) {
