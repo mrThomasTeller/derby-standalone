@@ -8205,7 +8205,7 @@ AttributesExpression.prototype.update = function(context, binding) {
   var oldValue = binding.oldValue;
   if (oldValue) {
     for (var key in oldValue) {
-      if (!(key in value)) {
+      if (key && !(key in value)) {
         var propertyName = !this.elementNs && UPDATE_PROPERTIES[key];
         if (propertyName) {
           element[propertyName] = null;
@@ -8216,6 +8216,7 @@ AttributesExpression.prototype.update = function(context, binding) {
   }
   
   for (var key in value) {
+    if (!key) continue;
     var attrValue = value[key];
     var propertyName = !this.elementNs && UPDATE_PROPERTIES[key];
     if (propertyName) {
@@ -8286,11 +8287,13 @@ Element.prototype.get = function(context) {
     }
     if (value) {
       for (var attrKey in value) {
-        var attrValue = value[attrKey];
-        if (attrValue === true) {
-          tagItems.push(attrKey);
-        } else if (attrValue !== false && attrValue != null) {
-          tagItems.push(attrKey + '="' + escapeAttribute(attrValue) + '"');
+        if (attrKey) {
+          var attrValue = value[attrKey];
+          if (attrValue === true) {
+            tagItems.push(attrKey);
+          } else if (attrValue !== false && attrValue != null) {
+            tagItems.push(attrKey + '="' + escapeAttribute(attrValue) + '"');
+          }
         }
       }
     }
@@ -8317,6 +8320,7 @@ Element.prototype.appendTo = function(parent, context) {
     }
     if (value) {
       for (var attrKey in value) {
+        if (!attrKey) continue;
         var attrValue = value[attrKey];
         if (attrValue === false || attrValue == null) continue;
         var propertyName = !this.ns && CREATE_PROPERTIES[attrKey];
