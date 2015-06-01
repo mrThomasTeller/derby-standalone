@@ -8210,9 +8210,7 @@ AttributesExpression.prototype.update = function(context, binding) {
         if (propertyName) {
           element[propertyName] = null;
         }
-        else {
-          element.removeAttribute(key);
-        }
+        element.removeAttribute(key);
       }
     }
   }
