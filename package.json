@@ -19,7 +19,7 @@
     "build": "node build.js"
   },
   "dependencies": {
-    "derby": "0.6.0-alpha55",
+    "derby": "git+https://github.com/CrocJS/derby.git",
     "mkdirp": "^0.5.0"
   },
   "devDependencies": {
